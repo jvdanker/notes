@@ -2,6 +2,43 @@ import React from 'react';
 import {useState, useEffect} from 'react';
 import './App.css';
 
+function Chapter(props) {
+    const [chapter, setChapter] = useState(null);
+    const [editing, setEditing] = useState(false);
+
+    const id = `chapter-${props.id}`;
+
+    useEffect(() => {
+        if (props.chapter) {
+            setChapter(props.chapter);
+        }
+    }, [props.chapter]);
+
+    useEffect(() => {
+        if (editing) {
+            document.getElementById(id).focus();
+        }
+    }, [editing, id]);
+
+    return (
+        <>
+            {!editing &&
+            <h1 onClick={(e) => {e.stopPropagation(); setEditing(true)}}>{chapter && chapter.title}</h1>
+            }
+            {editing &&
+            <input
+                id={id}
+                type="text"
+                value={chapter.title}
+                onClick={(e) => { e.stopPropagation(); }}
+                onChange={event => setChapter({...chapter, title: event.target.value})}
+                onBlur={() => { setEditing(false); props.onUpdate(chapter); }}
+            />
+            }
+        </>
+    );
+}
+
 function Note(props) {
     const [title, setTitle] = useState('title');
     const [editing, setEditing] = useState(false);
@@ -24,7 +61,7 @@ function Note(props) {
     }
 
     return (
-        <div className="note" onClick={() => edit()}>
+        <div className='note' onClick={() => edit()}>
             {!editing &&
                 <div onClick={(e) => {e.stopPropagation(); setEditing(true)}}>{title} - {id}</div>
             }
@@ -142,12 +179,27 @@ function App() {
         setChapters(newChapters);
     };
 
+    const updateChapter = (chapter) => {
+        let newChapters = Object.assign([], chapters);
+        newChapters = newChapters.map(c => {
+            if (c.id === chapter.id) {
+                return chapter;
+            }
+
+            return c;
+        });
+        setChapters(newChapters);
+    };
+
     return (
         <div className="App">
-            {chapters.map((chapter, i) =>
+            {chapters.map(chapter =>
                 <div key={chapter.id}>
-                    <h1>{chapter.title}</h1>
-                    {chapter.notes.map((note, i) =>
+                    <Chapter
+                        chapter={chapter}
+                        onUpdate={(chapter) => updateChapter(chapter)}
+                    />
+                    {chapter.notes.map(note =>
                         <Note
                             key={chapter.id + '-' + note.id}
                             id={note.id}
@@ -155,7 +207,7 @@ function App() {
                             onEdit={() => showEditor({chapterId: chapter.id, note})}
                         />
                     )}
-                    <AddNote addNote={(title) => {
+                    <AddNote addNote={title => {
                         let newChapters = Object.assign([], chapters);
 
                         let notes = newChapters.find(c => c.id === chapter.id).notes.map(c => c.id);
