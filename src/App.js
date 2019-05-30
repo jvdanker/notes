@@ -42,7 +42,6 @@ function Chapter(props) {
 function Note(props) {
     const [title, setTitle] = useState('title');
     const [editing, setEditing] = useState(false);
-    const [edited, setEdited] = useState(false);
 
     const id = `note${props.id}`;
 
@@ -52,27 +51,33 @@ function Note(props) {
         }
     }, [editing, id]);
 
-    function edit() {
-        if (!edited) {
-            props.onEdit('adlfjk');
+    function click() {
+        if (editing) {
+            setEditing(false);
+            props.onUpdateTitle(title);
+        } else {
+            props.onClick();
         }
-
-        setEdited(false);
     }
 
+    const editTitle = (e) => {
+        e.stopPropagation();
+        setEditing(true);
+        props.onEditTitle();
+    };
+
     return (
-        <div className='note' onClick={() => edit()}>
+        <div className='note' onClick={() => click()}>
             {!editing &&
-                <div onClick={(e) => {e.stopPropagation(); setEditing(true)}}>{title} - {id}</div>
+                <div onClick={e => editTitle(e)}>{props.note.title}</div>
             }
             {editing &&
                 <input
                     id={id}
                     type="text"
                     value={title}
-                    onClick={(e) => { e.stopPropagation(); }}
-                    onChange={(event) => setTitle(event.target.value)}
-                    onBlur={() => { setEdited(true); setEditing(false);} }
+                    onClick={e => e.stopPropagation()}
+                    onChange={event => setTitle(event.target.value)}
                 />
             }
         </div>
@@ -169,9 +174,16 @@ function App() {
 
         let newChapters = Object.assign([], chapters);
         let chapter = newChapters.find(c => c.id === chapterId);
+        chapter.notes = chapter.notes.map(n => n.id === note.id ? note : n);
+        setChapters(newChapters);
+    };
+
+    const saveNoteTitle = (chapterId, noteId, title) => {
+        let newChapters = Object.assign([], chapters);
+        let chapter = newChapters.find(c => c.id === chapterId);
         chapter.notes = chapter.notes.map(n => {
-            if (n.id === note.id) {
-                return note;
+            if (n.id === noteId) {
+                n.title = title;
             }
 
             return n;
@@ -181,13 +193,7 @@ function App() {
 
     const updateChapter = (chapter) => {
         let newChapters = Object.assign([], chapters);
-        newChapters = newChapters.map(c => {
-            if (c.id === chapter.id) {
-                return chapter;
-            }
-
-            return c;
-        });
+        newChapters = newChapters.map(c => c.id === chapter.id ? chapter : c);
         setChapters(newChapters);
     };
 
@@ -203,8 +209,10 @@ function App() {
                         <Note
                             key={chapter.id + '-' + note.id}
                             id={note.id}
-                            data={note}
-                            onEdit={() => showEditor({chapterId: chapter.id, note})}
+                            note={note}
+                            onClick={() => showEditor({chapterId: chapter.id, note})}
+                            onEditTitle={() => showEditor(false)}
+                            onUpdateTitle={(title) => saveNoteTitle(chapter.id, note.id, title)}
                         />
                     )}
                     <AddNote addNote={title => {
