@@ -87,7 +87,6 @@ function Note(props) {
 function AddNote(props) {
     const [title, setTitle] = useState('title');
     const [editing, setEditing] = useState(false);
-    const [edited, setEdited] = useState(false);
 
     const id = `note${props.id}`;
 
@@ -96,14 +95,6 @@ function AddNote(props) {
             document.getElementById(id).focus();
         }
     }, [editing, id]);
-
-    function edit() {
-        if (!edited) {
-            props.onEdit('adlfjk');
-        }
-
-        setEdited(false);
-    }
 
     return (
         <div className="addNote">
@@ -115,7 +106,7 @@ function AddNote(props) {
                     value={title}
                     onClick={(e) => { e.stopPropagation(); }}
                     onChange={(event) => setTitle(event.target.value)}
-                    onBlur={() => { setEdited(true); setEditing(false); props.addNote(title); } }
+                    onBlur={() => { setEditing(false); props.addNote(title); } }
                 />
             }
         </div>
@@ -144,7 +135,8 @@ function Editor(props) {
     };
 
     return (
-        <div>
+        <div className="editorComponent">
+            <h1>{props.note.title}</h1>
             <textarea
                 rows="10"
                 cols="20"
@@ -169,7 +161,7 @@ function App() {
     const [editor, showEditor] = useState(null);
     const [chapters, setChapters] = useState(chaptersData);
 
-    const saveNote = (chapterId, note) => {
+    const updateNote = (chapterId, note) => {
         showEditor(false);
 
         let newChapters = Object.assign([], chapters);
@@ -197,48 +189,52 @@ function App() {
         setChapters(newChapters);
     };
 
+    const addNote = (chapter, title) => {
+        let newChapters = Object.assign([], chapters);
+
+        let notes = newChapters.find(c => c.id === chapter.id).notes.map(c => c.id);
+        let max = notes.reduce((acc, curr) => Math.max(acc, curr), -1);
+        newChapters = newChapters.map(c => {
+            if (c.id === chapter.id) {
+                c.notes.push({id: max + 1, title: title, content: ''});
+            }
+            return c;
+        });
+
+        setChapters(newChapters);
+    };
+
     return (
         <div className="App">
-            {chapters.map(chapter =>
-                <div key={chapter.id}>
-                    <Chapter
-                        chapter={chapter}
-                        onUpdate={(chapter) => updateChapter(chapter)}
-                    />
-                    {chapter.notes.map(note =>
-                        <Note
-                            key={chapter.id + '-' + note.id}
-                            id={note.id}
-                            note={note}
-                            onClick={() => showEditor({chapterId: chapter.id, note})}
-                            onEditTitle={() => showEditor(false)}
-                            onUpdateTitle={(title) => saveNoteTitle(chapter.id, note.id, title)}
+            <div className="index">
+                {chapters.map(chapter =>
+                    <div key={chapter.id}>
+                        <Chapter
+                            chapter={chapter}
+                            onUpdate={(chapter) => updateChapter(chapter)}
                         />
-                    )}
-                    <AddNote addNote={title => {
-                        let newChapters = Object.assign([], chapters);
-
-                        let notes = newChapters.find(c => c.id === chapter.id).notes.map(c => c.id);
-                        let max = notes.reduce((acc, curr) => Math.max(acc, curr), -1);
-                        newChapters = newChapters.map(c => {
-                            if (c.id === chapter.id) {
-                                c.notes.push({id: max + 1, title: title, content: ''});
-                            }
-                            return c;
-                        });
-
-                        setChapters(newChapters);
-                    }}/>
-                </div>
-            )}
-
-            {editor &&
-            <Editor
-                chapterId={editor.chapterId}
-                note={editor.note}
-                onSave={(chapterId, note) => {console.log(chapterId, note); saveNote(chapterId, note)}}
-            />}
-
+                        {chapter.notes.map(note =>
+                            <Note
+                                key={chapter.id + '-' + note.id}
+                                id={note.id}
+                                note={note}
+                                onClick={() => showEditor({chapterId: chapter.id, note})}
+                                onEditTitle={() => showEditor(false)}
+                                onUpdateTitle={title => saveNoteTitle(chapter.id, note.id, title)}
+                            />
+                        )}
+                        <AddNote addNote={title => addNote(chapter, title)} />
+                    </div>
+                )}
+            </div>
+            <div className="editor">
+                {editor &&
+                <Editor
+                    chapterId={editor.chapterId}
+                    note={editor.note}
+                    onSave={(chapterId, note) => updateNote(chapterId, note)}
+                />}
+            </div>
             <pre>{JSON.stringify(chapters, null, ' ')}</pre>
         </div>
     );

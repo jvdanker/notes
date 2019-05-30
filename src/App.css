@@ -1,3 +1,22 @@
+.App {
+  display: flex;
+}
+
+.index {
+  flex: 1;
+}
+
+.editor {
+  flex: 2;
+  display: flex;
+}
+
+.editorComponent {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
 .note {
   border: 1px solid black;
   padding: 50px;
@@ -6,12 +25,18 @@
 }
 
 .addNote {
-  border: 1px solid black;
+  border: 1px solid #cdcdcd;
+  color: #cdcdcd;
   padding: 50px;
   margin: 10px;
   display: inline-block;
 }
 
+.addNote:hover {
+  border: 1px solid black;
+}
+
 div {
   border: 1px solid red;
 }
+
