@@ -2,6 +2,41 @@ import React from 'react';
 import {useState, useEffect} from 'react';
 import './App.css';
 
+function EditableTitle(props) {
+    const [title, setTitle] = useState(null);
+    const [editing, setEditing] = useState(false);
+
+    useEffect(() => {
+        if (props.title) {
+            setTitle(props.title);
+        }
+    }, [props.title]);
+
+    useEffect(() => {
+        if (editing) {
+            document.getElementById('editTitle').focus();
+        }
+    }, [editing]);
+
+    return (
+        <>
+            {!editing &&
+            <h1 onClick={e => {e.stopPropagation(); setEditing(true)}}>{title}</h1>
+            }
+            {editing &&
+            <input
+                id="editTitle"
+                type="text"
+                value={title}
+                onClick={e => e.stopPropagation()}
+                onChange={event => setTitle(event.target.value)}
+                onBlur={() => { setEditing(false); props.onUpdate(title); }}
+            />
+            }
+        </>
+    );
+}
+
 function Chapter(props) {
     const [chapter, setChapter] = useState(null);
     const [editing, setEditing] = useState(false);
@@ -125,6 +160,7 @@ function Editor(props) {
         if (props.note) {
             setNote(props.note);
             setContent(props.note.content);
+            document.getElementById('textEdit').focus();
         }
     }, [props.note, props.chapterId]);
 
@@ -134,10 +170,19 @@ function Editor(props) {
         props.onSave(chapterId, note);
     };
 
+    const updateTitle = (title) => {
+        note.title = title;
+        setNote(note);
+    };
+
     return (
         <div className="editorComponent">
-            <h1>{props.note.title}</h1>
+            <EditableTitle
+                title={props.note.title}
+                onUpdate={(title) => updateTitle(title)}
+            />
             <textarea
+                id="textEdit"
                 rows="10"
                 cols="20"
                 value={content}
@@ -162,8 +207,6 @@ function App() {
     const [chapters, setChapters] = useState(chaptersData);
 
     const updateNote = (chapterId, note) => {
-        showEditor(false);
-
         let newChapters = Object.assign([], chapters);
         let chapter = newChapters.find(c => c.id === chapterId);
         chapter.notes = chapter.notes.map(n => n.id === note.id ? note : n);

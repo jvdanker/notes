@@ -17,6 +17,18 @@
   flex-direction: column;
 }
 
+.editorComponent input {
+  font-size: 2em;
+  margin: 0.67em 0;
+  font-weight: bold;
+  border: none;
+}
+
+.editorComponent h1:hover {
+  border: 1px solid #ababab;
+  cursor: pointer;
+}
+
 .note {
   border: 1px solid black;
   padding: 50px;
